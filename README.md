@@ -10,12 +10,17 @@ scored against labeled spans.
 | set | questions | sessions | a question is found by a passage in |
 |---|---|---|---|
 | funes-memory | 244 about funes's development | 139 coding-agent sessions | the gold turn or the 3 turns on each side of it |
+| [longmemeval](longmemeval/) | 470, LongMemEval-S's answerable ones | 19,195 chat sessions | an evidence turn or the turn after it |
 
 - funes-memory is the set of the [funes recall benchmark](https://huggingface.co/datasets/dacorvo/funes-recall-benchmark)
   (`funes-memory/questions.jsonl`), over the public memory
   [`huggingface/funes-memory`](https://huggingface.co/datasets/huggingface/funes-memory). Its questions
   are worded the way someone asks weeks later and avoid the answer's words, so a tool cannot find the
   turn by matching them. Its README says how they were written.
+- longmemeval asks the questions of [LongMemEval](https://github.com/xiaowu0162/LongMemEval)
+  (arXiv:2410.10813, `longmemeval_s_cleaned.json` of `xiaowu0162/longmemeval-cleaned`) over one pile of
+  the 19,195 distinct sessions of its 500 haystacks, rather than over each question's own haystack of
+  about 48 sessions. [longmemeval/](longmemeval/) says how the gold spans were drawn.
 
 ## Results
 
@@ -92,6 +97,7 @@ python3 tools/score.py bench/funes-memory/questions.jsonl runs/deja/search.jsonl
 | set | memory | transcripts digest | questions |
 |---|---|---|---|
 | funes-memory | `huggingface/funes-memory` at `347686a1c7ed495fb653d650d78f9b92f8744c7a` | `62ef948a1587f59a8506a6bfb4c4255fc8074a1d927c6fb299572aeaf42540ff` | `bench/funes-memory/questions.jsonl` |
+| longmemeval | `dacorvo/funes-xiaowu0162-longmemeval-cleaned-s` at `58450d98655f3d104359fb119933d7a4d6597d13` | `3298cc7cdccadb42255aa628d49a963ae7367619642b1f216abd82d3287db7e0` | [`longmemeval/questions.jsonl`](longmemeval/questions.jsonl) |
 
 The digest is what `(cd corpus && find home turns.jsonl -type f | LC_ALL=C sort | xargs sha256sum | sha256sum)`
 prints. Each driver's docstring gives its usage, its arms and how it places passages. The releases
@@ -118,6 +124,7 @@ first. `tools/clean.sh HOME CMD ...` runs a command in the same clean environmen
 - `drivers/`: one driver per tool, and `common.py`, which they share
 - `tools/`: `score.py`, `compare.py`, `turnmap.py` (places a tool's passages at the memory's turns)
   and `clean.sh`
+- `longmemeval/`: `questions.py` and the questions it writes
 - `results/<set>/`: the receipt of each run (`<date>.md`) and each arm's hits
   (`<tool>/<arm>.jsonl`, one line a question, the passages in order as turns of the memory)
 
@@ -125,4 +132,5 @@ The tools' raw answers are not kept here, since the drivers write them again.
 
 ## License
 
-Apache-2.0.
+Apache-2.0. `longmemeval/questions.jsonl` holds LongMemEval's questions and answers, under its MIT
+license.
