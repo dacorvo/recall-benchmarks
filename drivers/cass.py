@@ -111,7 +111,7 @@ def main():
     if os.environ.get("SKIP_BUILD"):
         builds = []
     for cmd in builds:
-        r = run(cmd, env, timeout=12 * 3600)
+        r = run(cmd, env, timeout=48 * 3600)
         open(os.path.join(out_dir, "raw", f"build.{phase}.{cmd[1]}.{cmd[2]}.out"), "w").write(r.stdout + "\n" + r.stderr)
         if r.returncode != 0:
             raise SystemExit(f"{' '.join(cmd[1:])} failed ({r.returncode}): {r.stderr[-600:]}")

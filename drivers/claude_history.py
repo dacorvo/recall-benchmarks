@@ -134,7 +134,7 @@ def main():
     else:
         raise SystemExit(f"unknown phase {phase}")
     if build and not os.environ.get("SKIP_BUILD"):
-        r = run(build, env, timeout=12 * 3600)
+        r = run(build, env, timeout=48 * 3600)
         info.setdefault("builds", {})[" ".join(build[1:])] = {"rc": r.returncode}
         open(os.path.join(out_dir, "raw", f"build.{phase}.out"), "w").write(r.stdout + "\n" + r.stderr)
         if r.returncode != 0:
