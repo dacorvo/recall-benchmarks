@@ -128,7 +128,9 @@ first. `tools/clean.sh HOME CMD ...` runs a command in the same clean environmen
 - `results/<set>/`: the receipt of each run (`<date>.md`) and each arm's hits
   (`<tool>/<arm>.jsonl`, one line a question, the passages in order as turns of the memory)
 
-The tools' raw answers are not kept here, since the drivers write them again.
+The tools' raw answers are in the bucket
+[`dacorvo/recall-benchmark`](https://huggingface.co/buckets/dacorvo/recall-benchmark), under
+`<set>/<tool>/raw/`, each run's `run.json` beside them.
 
 ## License
 
