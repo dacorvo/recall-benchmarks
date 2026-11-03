@@ -29,7 +29,7 @@ funes-memory, 244 questions, each tool at its defaults with the question verbati
 
 | tool | asked with | hit@1 | hit@5 | found@8 | MRR | session |
 |---|---|---|---|---|---|---|
-| funes 1.10.0+dev | `funes recall` (a pool of 30, reranked) | 62 | 111 | 128 | 0.339 | - |
+| funes 1.10.0+dev | `funes recall` (a pool of 30, reranked) | 62 | 111 | 128 | 0.339 | 211 |
 | MemPalace 3.11.0 | MCP `mempalace_search` | 37 | 72 | 85 | 0.207 | 189 |
 | agentmemory 0.9.31 | MCP `memory_smart_search`, keyless | 21 | 57 | 66 | 0.141 | 198 |
 | deja-vu 0.23.5 | `deja search --limit 8` | 18 | 53 | 58 | 0.128 | 171 |
@@ -40,9 +40,9 @@ funes-memory, 244 questions, each tool at its defaults with the question verbati
 | agentsview 0.46.1 | `agentsview session search` | 0 | 0 | 0 | 0.000 | 0 |
 
 With an opt-in local mode, claude-history's semantic search finds 104 (140 counting its runs of turns
-whole), MemPalace with `sweep` 100, cass with its MiniLM model 90 and ctx with its E5 model 25. The
-receipt has every arm. `session` counts a question found when one of the first 8 distinct sessions is
-a gold session. funes's row comes from `score_recall`, which scores turns only.
+whole, where funes does not rank the gold above it question by question), MemPalace with `sweep`
+100, cass with its MiniLM model 90 and ctx with its E5 model 25. The receipt has every arm.
+`session` counts a question found when one of the first 8 distinct sessions is a gold session.
 
 ## Rules
 
