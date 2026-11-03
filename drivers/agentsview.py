@@ -58,6 +58,16 @@ def port_free(port):
         s.close()
 
 
+def listed(av, env, flags):
+    """How many sessions `session list` counts (its `total`), or its error: on a large archive, listing every
+    kind of session outlasts the daemon's 30-second response timeout."""
+    r = run([av, "session", "list", "--json", "--limit", "1"] + flags, env)
+    try:
+        return json.loads(r.stdout)["total"]
+    except (ValueError, KeyError):
+        return r.stderr.strip()[-300:]
+
+
 def fid_of(res, sid):
     """The session's file id: agentsview's id is the transcript's session id, maybe behind an agent prefix."""
     if res.tm.session(sid):
@@ -108,21 +118,20 @@ def main():
     if start.returncode != 0:
         raise SystemExit(f"agentsview daemon start failed: {start.stderr[-500:]}{start.stdout[-500:]}")
     qs = questions(qpath)
-    stats, empty, sessions = {}, {}, {}
+    stats, empty, errors = {}, {}, {}
     try:
-        for label, flags in (("default", []),
-                             ("all", ["--include-one-shot", "--include-automated", "--include-children"])):
-            r = run([av, "session", "list", "--json", "--limit", "500"] + flags, env)
-            sessions[label] = len(json.loads(r.stdout).get("sessions") or [])
+        sessions = {"default": listed(av, env, []),
+                    "all": listed(av, env, ["--include-one-shot", "--include-automated", "--include-children"])}
         for arm, args in ARMS.items():
             res = Resolver(corpus)
             extra = {"unknown_session": 0}
-            empty[arm] = 0
+            empty[arm], errors[arm] = 0, 0
             with open(os.path.join(out, arm + ".jsonl"), "w") as f:
                 for q in qs:
                     r = run([av, "session", "search"] + args(q["question"]) + ["--json"], env)
                     open(os.path.join(out, "raw", f"{q['id']}.{arm}.json"), "w").write(r.stdout)
                     if r.returncode != 0:
+                        errors[arm] += 1
                         open(os.path.join(out, "raw", f"{q['id']}.{arm}.err"), "w").write(r.stderr)
                     d = json.loads(r.stdout) if r.stdout.strip() else {}
                     empty[arm] += not d.get("matches")
@@ -136,9 +145,9 @@ def main():
             "question", "<q without stop words>").replace("QUESTION", "<q>") for arm, args in ARMS.items()},
         "env": {k: v for k, v in env.items() if k not in ("HOME", "PATH", "LANG", "TERM")}},
         "port": port, "sync_stdout": sync.stdout[-400:], "sessions_listed": sessions, "empty_answers": empty,
-        "resolver": stats, "stop_rc": stop.returncode}
+        "search_errors": errors, "resolver": stats, "stop_rc": stop.returncode}
     json.dump(info, open(os.path.join(out, "run.json"), "w"), indent=1)
-    print(json.dumps({k: info[k] for k in ("port", "sessions_listed", "empty_answers", "resolver")}))
+    print(json.dumps({k: info[k] for k in ("port", "sessions_listed", "empty_answers", "search_errors", "resolver")}))
 
 
 if __name__ == "__main__":
