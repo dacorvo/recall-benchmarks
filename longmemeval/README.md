@@ -3,7 +3,8 @@
 [LongMemEval](https://github.com/xiaowu0162/LongMemEval) (arXiv:2410.10813) asks 500 questions about
 long chat histories between a user and an assistant, and marks the turns that hold each answer
 (`has_answer`). These are its questions, asked over every distinct session of its LongMemEval-S
-haystacks at once, with a gold span at each marked turn.
+haystacks at once, with a gold span at each marked turn and at the same turn of every copy of its
+session.
 
 - source: `longmemeval_s_cleaned.json` of
   [`xiaowu0162/longmemeval-cleaned`](https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned)
@@ -19,7 +20,7 @@ haystacks at once, with a gold span at each marked turn.
 reference answer:
 
 ```json
-{"id": "e47becba", "kind": "single-session-user", "question": "What degree did I graduate with?", "answer": "Business Administration", "gold": [{"session_id": "answer_280352e9", "from": 4, "to": 5}, {"session_id": "answer_280352e9", "from": 5, "to": 6}]}
+{"id": "e47becba", "kind": "single-session-user", "question": "What degree did I graduate with?", "answer": "Business Administration", "gold": [{"session_id": "answer_280352e9", "from": 4, "to": 5}, {"session_id": "answer_280352e9", "from": 5, "to": 6}, {"session_id": "280352e9", "from": 4, "to": 5, "copy_of": "answer_280352e9"}, {"session_id": "280352e9", "from": 5, "to": 6, "copy_of": "answer_280352e9"}]}
 ```
 
 A gold span is a marked turn and the turn after it, the rule of the funes recall benchmark's sharegpt
@@ -27,6 +28,15 @@ set, since a turn here is one whole message. Turns are numbered as funes numbers
 blank turns, so a turn's number is its index among its session's non-blank turns (10 turns of 5
 sessions are blank). A question is found by a passage in any of its spans, also when its answer is
 spread over several sessions (LongMemEval's own `recall_all` asks for every one of them).
+
+Some sessions are copies of each other under different ids: 731 of the 19,195 repeat the non-blank
+turns of another one, role and text (640 groups of 2 to 4 sessions, such as `280352e9` and
+`answer_280352e9` above). A copy holds the same turns as the session LongMemEval marks, and no tool
+can tell the two apart by what they hold. A tool that keeps one copy of each conversation can only
+return the one it kept (MemPalace skips a conversation whose text it has already stored). So each
+span is also named in every copy of its session, with `copy_of` naming the session LongMemEval marks.
+This departs from LongMemEval's labels, which name the marked session only. Scored on the marked
+spans alone, every tool loses questions to how it orders two identical passages.
 
 | kind | questions |
 |---|---|
@@ -37,12 +47,15 @@ spread over several sessions (LongMemEval's own `recall_all` asks for every one 
 | single-session-assistant | 56 |
 | single-session-preference | 30 |
 
-The 470 questions have 886 spans in 837 sessions. 187 questions have their spans in one session, 228 in
-two and 55 in three to six. 13 spans hold one turn, where the marked turn ends its session.
+The 470 questions have 886 marked spans in 837 sessions. 187 questions have their marked spans in one
+session, 228 in two and 55 in three to six. 13 spans hold one turn, where the marked turn ends its
+session. 318 of the marked sessions have copies (367 sessions), which add 389 spans to 234 questions:
+1,275 spans in all.
 
 `questions.py` writes the file from the source and a local copy of the memory (it needs pylance), and
-checks that the memory holds every span's turns with the source's text. They all do. (6 turns of the
-memory differ from the source, all by funes's redaction of a secret, and none is in a span.)
+checks that the memory holds every span's turns, copies included, with the source's text. They all
+do. (6 turns of the memory differ from the source, all by funes's redaction of a secret, and none is
+in a span.)
 
 ```bash
 hf download xiaowu0162/longmemeval-cleaned longmemeval_s_cleaned.json --repo-type dataset --revision 98d7416c24c778c2fee6e6f3006e7a073259d48f --local-dir src

@@ -10,7 +10,7 @@ scored against labeled spans.
 | set | questions | sessions | a question is found by a passage in |
 |---|---|---|---|
 | funes-memory | 244 about funes's development | 139 coding-agent sessions | the gold turn or the 3 turns on each side of it |
-| [longmemeval](longmemeval/) | 470, LongMemEval-S's answerable ones | 19,195 chat sessions | an evidence turn or the turn after it |
+| [longmemeval](longmemeval/) | 470, LongMemEval-S's answerable ones | 19,195 chat sessions | an evidence turn or the turn after it, in its session or a copy of it |
 
 - funes-memory is the set of the [funes recall benchmark](https://huggingface.co/datasets/dacorvo/funes-recall-benchmark)
   (`funes-memory/questions.jsonl`), over the public memory
