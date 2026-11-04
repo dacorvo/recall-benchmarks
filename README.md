@@ -5,6 +5,9 @@ the first 8 passages it returns? Each tool here reads the same sessions and is a
 questions, verbatim, at its defaults. Its passages are then placed at the turns they come from and
 scored against labeled spans.
 
+I wrote funes, one of the tools compared here. Everything needed to check the results is public: the
+rules, the drivers and each tool's raw answers.
+
 ## Sets
 
 | set | questions | sessions | a question is found by a passage in |
@@ -39,9 +42,9 @@ funes-memory, 244 questions, each tool at its defaults with the question verbati
 | claude-history 0.1.81 | `claude-history agent search` | 1 | 1 | 1 | 0.004 | 4 |
 | agentsview 0.46.1 | `agentsview session search` | 0 | 0 | 0 | 0.000 | 0 |
 
-With an opt-in local mode, claude-history's semantic search finds 104 (140 counting its runs of turns
-whole, where funes does not rank the gold above it question by question), MemPalace with `sweep`
-100, cass with its MiniLM model 90 and ctx with its E5 model 25. The receipt has every arm.
+With an opt-in local mode, claude-history's semantic search finds 104 (140 counted another way, see
+below), MemPalace with `sweep` 100, cass with its MiniLM model 90 and ctx with its E5 model 25. The
+receipt has every arm.
 
 longmemeval, 470 questions over 19,195 sessions, each tool at its defaults with the question verbatim
 ([receipt](results/longmemeval/2026-11-04.md)):
@@ -65,6 +68,15 @@ agentmemory 223 and deja-vu's `search` 212.
 
 `session` counts a question found when one of the first 8 distinct sessions is a gold session.
 
+funes does not come out ahead everywhere:
+
+- On funes-memory, claude-history's semantic search (an optional mode) can return a long stretch of a
+  conversation as a single result. If such a result counts as soon as it contains the answer,
+  claude-history finds 140 answers and funes 128. Compared question by question, neither tool is
+  clearly better.
+- In the `session` column, funes is tied: with claude-history's semantic search on funes-memory (211
+  each), and with deja-vu's search on LongMemEval (280 each).
+
 ## Rules
 
 1. **The same files.** Every tool reads a set's sessions as Claude Code transcripts, rebuilt from the
@@ -75,10 +87,10 @@ agentmemory 223 and deja-vu's `search` 212.
    rebuilt files instead (the control in the [receipt](results/funes-memory/2026-11-03.md)).
 2. **Isolation.** Each tool gets its own HOME, holding a copy of the transcripts, and runs with HOME,
    a system PATH, LANG and TERM and its own data-directory variables, nothing else from the calling
-   environment. No agent is wired to a tool and no API key or hosted service is used. ctx's and
-   agentsview's telemetry and update checks, and cass's update prompt, are turned off by their
-   environment variables. A tool may download its own local model. Every daemon a run starts is
-   stopped at its end.
+   environment. No agent is wired to a tool and no API key or hosted service is used. That leaves out
+   claude-mem, which needs an LLM to write its memory. ctx's and agentsview's telemetry and update
+   checks, and cass's update prompt, are turned off by their environment variables. A tool may
+   download its own local model. Every daemon a run starts is stopped at its end.
 3. **Defaults, verbatim.** A tool indexes the history its documented way. Each question is asked
    once, verbatim, at the tool's defaults, through the interface it gives an agent: its MCP tool, or
    the CLI command that returns the same results. A tool that returns fewer than 8 results by default
