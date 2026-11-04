@@ -95,8 +95,9 @@ agentmemory 223 and deja-vu's `search` 212.
    the first 8 passages is a turn in a gold span, or a run that overlaps one. Its rank is the position
    of the first such passage. hit@1, hit@5 and found@8 count the questions found within the first 1, 5
    and 8 passages, and MRR is the mean of 1/rank (0 when not found). The session row scores the same
-   passages by their session alone, the first 8 distinct sessions, as deja-vu's
-   [day-zero page](https://vshulcz.github.io/deja-vu/guide/day-zero.html) does.
+   passages by their session alone, over the first 8 distinct sessions. deja-vu's
+   [day-zero page](https://vshulcz.github.io/deja-vu/guide/day-zero.html) scores by session too, over
+   the first 50 results.
 
 The receipts report precision only: no latency, build time or output size. Several tools ran at once
 on one machine.
