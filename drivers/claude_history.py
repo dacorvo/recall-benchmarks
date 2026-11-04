@@ -1,11 +1,12 @@
 """Score claude-history (github.com/raine/claude-history) on a set: ask each question through
 `claude-history agent search`, the retrieval interface its Claude Code skill gives an agent.
 
-usage: claude_history.py CLAUDE_HISTORY CORPUS QUESTIONS HOME OUT_DIR PHASE
+usage: claude_history.py CLAUDE_HISTORY CORPUS QUESTIONS HOME OUT_DIR PHASE [ARM ...]
 
 HOME holds a copy of CORPUS's `.claude`. claude-history reads `~/.claude/projects` directly and keeps its
 keyword store and semantic cache under HOME/.cache/claude-history. Commands run from HOME, which is no project
-of the corpus (agent search is global by default anyway). PHASE is:
+of the corpus (agent search is global by default anyway). Each ARM names one of the phase's arms to ask (default:
+all of them). PHASE is:
 
 - lexical: the first command on an empty cache builds the keyword store, then two arms:
   - default: `agent search <q>`, the question verbatim at the defaults (lexical, which needs every word to
@@ -133,6 +134,10 @@ def main():
                 "hybrid-nobudget": (verbatim, ["--mode", "hybrid", "--no-budget"])}
     else:
         raise SystemExit(f"unknown phase {phase}")
+    unknown = set(sys.argv[7:]) - set(arms)
+    if unknown:
+        raise SystemExit(f"{phase} has no arm {' '.join(sorted(unknown))}: its arms are {' '.join(arms)}")
+    arms = {a: arms[a] for a in sys.argv[7:]} or arms
     if build and not os.environ.get("SKIP_BUILD"):
         r = run(build, env, timeout=48 * 3600)
         info.setdefault("builds", {})[" ".join(build[1:])] = {"rc": r.returncode}
