@@ -42,6 +42,27 @@ funes-memory, 244 questions, each tool at its defaults with the question verbati
 With an opt-in local mode, claude-history's semantic search finds 104 (140 counting its runs of turns
 whole, where funes does not rank the gold above it question by question), MemPalace with `sweep`
 100, cass with its MiniLM model 90 and ctx with its E5 model 25. The receipt has every arm.
+
+longmemeval, 470 questions over 19,195 sessions, each tool at its defaults with the question verbatim
+([receipt](results/longmemeval/2026-11-04.md)):
+
+| tool | asked with | hit@1 | hit@5 | found@8 | MRR | session |
+|---|---|---|---|---|---|---|
+| funes 1.10.0+dev | `funes recall` (a pool of 30, reranked) | 148 | 239 | 254 | 0.393 | 280 |
+| agentmemory 0.9.31 | MCP `memory_smart_search`, keyless | 105 | 198 | 225 | 0.306 | 276 |
+| deja-vu 0.23.5 | `deja search --limit 8` | 123 | 199 | 219 | 0.325 | 280 |
+| deja-vu 0.23.5 | `deja recall`, its MCP page | 120 | 161 | 184 | 0.298 | 219 |
+| MemPalace 3.11.0 | MCP `mempalace_search` | 94 | 141 | 153 | 0.240 | 194 |
+| ctx 2.3.0 | `ctx search` | 33 | 62 | 67 | 0.093 | 103 |
+| cass 0.10.0 | `cass search --robot --limit 8` | 11 | 14 | 14 | 0.025 | 23 |
+| claude-history 0.1.81 | `claude-history agent search` | 5 | 7 | 7 | 0.012 | 9 |
+| agentsview 0.46.1 | `agentsview session search` | 0 | 0 | 0 | 0.000 | 1 |
+
+With an opt-in local mode, MemPalace with `sweep` finds 161 and cass with its MiniLM model 142.
+claude-history's semantic cache cannot hold this pile. A copy of a gold session counts as gold
+([longmemeval/](longmemeval/) says why). On the sessions LongMemEval marks alone, funes finds 252,
+agentmemory 223 and deja-vu's `search` 212.
+
 `session` counts a question found when one of the first 8 distinct sessions is a gold session.
 
 ## Rules
