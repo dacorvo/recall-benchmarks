@@ -4,7 +4,7 @@ As a module: `TurnMap(CORPUS)` reads `CORPUS/turns.jsonl` (written with the tran
 benchmark's `rebuild_sessions.py`) and resolves a record's uuid, or a passage of its text, to the memory's
 session id and `seq`.
 
-As a script: `turnmap.py gold CORPUS QUESTIONS` prints QUESTIONS with each gold span moved to the rebuilt
+As a script: `turnmap.py gold CORPUS QUESTIONS` prints QUESTIONS with each answering turn moved to the rebuilt
 files' numbering (the file's session id, one turn a line), so funes can be scored on its index of them.
 """
 import collections
@@ -86,20 +86,23 @@ class TurnMap:
 
 def gold(corpus, questions):
     tm = TurnMap(corpus)
-    fid_of = {r["session_id"]: r["file_session_id"] for r in tm.rows}
+    at = {(r["session_id"], r["seq"]): r for r in tm.rows}
+    missing = 0
     for l in open(questions):
         if not l.strip():
             continue
         q = json.loads(l)
-        spans = []
-        for s in q["gold"]:
-            fid = fid_of[s["session_id"]]
-            lines = [i for i, r in enumerate(tm.by_file[fid])
-                     if s.get("from") is None or s["from"] <= r["seq"] <= s["to"]]
-            if lines:
-                spans.append({"session_id": fid, "from": min(lines), "to": max(lines)})
-        q["gold"] = spans
+        turns = []
+        for a in q["gold"]:
+            r = at.get((a["session_id"], a["turn"]))
+            if r:
+                turns.append({"session_id": r["file_session_id"], "turn": r["line"]})
+            else:
+                missing += 1
+        q["gold"] = turns
         print(json.dumps(q, ensure_ascii=False))
+    if missing:
+        print(f"{missing} answering turns are not in the files", file=sys.stderr)
 
 
 if __name__ == "__main__":

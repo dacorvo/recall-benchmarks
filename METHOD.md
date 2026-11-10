@@ -5,20 +5,23 @@ How the sets are built, how the tools are run and scored, and how to run one you
 
 ## Sets
 
-| set | questions | sessions | a question is found by a passage in |
+| set | questions | sessions | answering turns |
 |---|---|---|---|
-| funes-memory | 244 about funes's development | 139 coding-agent sessions | the gold turn or the 3 turns on each side of it |
-| [longmemeval](longmemeval/) | 470, LongMemEval-S's answerable ones | 19,195 chat sessions | an evidence turn or the turn after it, in its session or a copy of it |
+| funes-memory | 240 about funes's development | 139 coding-agent sessions | the answer and its reviewed restatements |
+| sharegpt | 100, each in English and in Chinese | 2,000 programming conversations in each language | the reply and its restatements |
+| swe-chat | 100 in Chinese, 36 in Portuguese | 635 and 153 coding-agent sessions | the answering turn and its restatements |
+| thomasmustier-pi-sessions | 100 | 715 sessions of one developer with the pi agent | the answering turn and its restatements |
+| [longmemeval](longmemeval/) | 470, LongMemEval-S's answerable ones | 19,195 chat sessions | each evidence turn, in its session and in every copy of it |
 
-- funes-memory is the set of the [funes recall benchmark](https://huggingface.co/datasets/dacorvo/funes-recall-benchmark)
-  (`funes-memory/questions.jsonl`), over the public memory
-  [`huggingface/funes-memory`](https://huggingface.co/datasets/huggingface/funes-memory). Its questions
-  are worded the way someone asks weeks later and avoid the answer's words, so a tool cannot find the
-  turn by matching them. Its README says how they were written.
+- funes-memory, sharegpt, swe-chat and thomasmustier-pi-sessions are the sets of the
+  [funes recall benchmark](https://huggingface.co/datasets/dacorvo/funes-recall-benchmark), each over public
+  funes memories (listed under [Running a tool](#running-a-tool)). Their questions are worded the way
+  someone asks weeks later and avoid the answer's words, so a tool cannot find the turn by matching them.
+  Each set's README says how its questions were written and which turns answer them.
 - longmemeval asks the questions of [LongMemEval](https://github.com/xiaowu0162/LongMemEval)
   (arXiv:2410.10813, `longmemeval_s_cleaned.json` of `xiaowu0162/longmemeval-cleaned`) over one pile of
   the 19,195 distinct sessions of its 500 haystacks, rather than over each question's own haystack of
-  about 48 sessions. [longmemeval/](longmemeval/) says how the gold spans were drawn.
+  about 48 sessions. [longmemeval/](longmemeval/) says how its answering turns were drawn.
 
 ## Rules
 
@@ -40,13 +43,17 @@ How the sets are built, how the tools are run and scored, and how to run one you
 4. **Opt-in modes.** An optional local mode (no key) is scored as an arm of its own.
 5. **Passages.** A passage is one result, in the tool's order. It is placed at the turn its exact
    metadata names (a uuid, timestamp, line or message number, checked against the files), else by its
-   text within its session. A passage that covers several turns is a run of turns. A result that names
-   a session but no place in it counts for the session row only.
+   text within its session. A passage that covers several turns is a run of turns. funes frames each
+   hit with turns of its exchange (the prompt that opened it, the assistant's last text and the next
+   prompt), and those turns are part of its passage. A result that names a session but no place in it
+   counts for the session row only.
 6. **Scoring** (`tools/score.py`, the rule of funes's `score_recall`). A question is found when one of
-   the first 8 passages is a turn in a gold span, or a run that overlaps one. Its rank is the position
-   of the first such passage. hit@1, hit@5 and found@8 count the questions found within the first 1, 5
-   and 8 passages, and MRR is the mean of 1/rank (0 when not found). The session row scores the same
-   passages by their session alone, over the first 8 distinct sessions. deja-vu's
+   the first 8 passages shows one of its answering turns: as its turn, as a turn of its run, or in its
+   frame. Its rank is the position of the first such passage. hit@1, hit@5 and found@8 count the
+   questions found within the first 1, 5 and 8 passages, and MRR is the mean of 1/rank (0 when not
+   found). `as a hit` counts the questions where one of the first 8 passages is an answering turn
+   itself, not through a frame. The session row scores the same passages by their session alone, over
+   the first 8 distinct sessions. deja-vu's
    [day-zero page](https://vshulcz.github.io/deja-vu/guide/day-zero.html) scores by session too, over
    the first 50 results.
 
@@ -59,7 +66,7 @@ Rebuild a set's transcripts (this needs pylance), give the tool a home with a co
 driver, then score each arm:
 
 ```bash
-hf download dacorvo/funes-recall-benchmark --repo-type dataset --revision 59b1ed846301eb3bccf384c1ffbfe11e8ec7c441 --local-dir bench
+hf download dacorvo/funes-recall-benchmark --repo-type dataset --revision 098ad102a0e7bece7d7c7f18e0f32430ee49a953 --local-dir bench
 hf download huggingface/funes-memory --repo-type dataset --revision 347686a1c7ed495fb653d650d78f9b92f8744c7a --include 'chunks.lance/*' --local-dir mem
 python3 bench/funes-memory/tools/rebuild_sessions.py mem/chunks.lance corpus
 mkdir -p homes/deja && cp -a corpus/home/.claude homes/deja/
@@ -70,10 +77,19 @@ python3 tools/score.py bench/funes-memory/questions.jsonl runs/deja/search.jsonl
 | set | memory | transcripts digest | questions |
 |---|---|---|---|
 | funes-memory | `huggingface/funes-memory` at `347686a1c7ed495fb653d650d78f9b92f8744c7a` | `62ef948a1587f59a8506a6bfb4c4255fc8074a1d927c6fb299572aeaf42540ff` | `bench/funes-memory/questions.jsonl` |
+| sharegpt-en | `huggingface/funes-sharegpt-en` at `c9aa03279a825cdd5218421a303fd6ca541b40bb` | `0d73c2e45bdbd66308baa4e84484f025a5097dd924eb401982b51f0305ce3d53` | `bench/sharegpt/questions-en.jsonl` |
+| sharegpt-zh | `huggingface/funes-sharegpt-zh` at `39b42e1e789c107b2b913e5abd897ed89064f81e` | `3e02149ff1c6c03caa82ac9b4306b39b8b012d76bdf44122e60f02c6a27f644f` | `bench/sharegpt/questions-zh.jsonl` |
+| sharegpt-zh-e5 | `huggingface/funes-sharegpt-zh-e5` at `c510570f61d5395e535a976773c261d3250fed5f` | `3e02149ff1c6c03caa82ac9b4306b39b8b012d76bdf44122e60f02c6a27f644f` | `bench/sharegpt/questions-zh.jsonl` |
+| swe-chat-zh-e5 | `huggingface/funes-swe-chat-zh-e5` at `31749928929be585964d248a132ddd116bb3b885` | `c97af069ca3d3e76a67c23b16e6aad7ea4195fe730a29d1e489f0eb5c54b5c98` | `bench/swe-chat/questions.jsonl` |
+| swe-chat-pt | `huggingface/funes-swe-chat-pt` at `22ff20415fcb7c9cb881afc486fff8032c3f9c6b` | `ebcad94a8fdecce615969e525b2c9b6fbe45fc696f19153854a00d63778801da` | `bench/swe-chat/questions-pt.jsonl` |
+| swe-chat-pt-e5 | `huggingface/funes-swe-chat-pt-e5` at `457d2154e6ac2843faa393c05400073bc4e5e8db` | `ebcad94a8fdecce615969e525b2c9b6fbe45fc696f19153854a00d63778801da` | `bench/swe-chat/questions-pt.jsonl` |
+| thomasmustier-pi-sessions | `huggingface/funes-thomasmustier-pi-sessions` at `42244122ebbf42166ffb73897dd6eaaa2f977dc8` | `45d6322c639f493fd37d31f1f1375b7036e665aef0edd56f13fa05d4007f1017` | `bench/thomasmustier-pi-sessions/questions.jsonl` |
 | longmemeval | `dacorvo/funes-xiaowu0162-longmemeval-cleaned-s` at `58450d98655f3d104359fb119933d7a4d6597d13` | `3298cc7cdccadb42255aa628d49a963ae7367619642b1f216abd82d3287db7e0` | [`longmemeval/questions.jsonl`](longmemeval/questions.jsonl) |
 
 The digest is what `(cd corpus && find home turns.jsonl -type f | LC_ALL=C sort | xargs sha256sum | sha256sum)`
-prints. Each driver's docstring gives its usage, its arms and how it places passages. The releases
+prints. The memories are at the revisions the benchmark's results pin. An `-e5` memory holds the same sessions
+as its twin, embedded with multilingual-e5, and rebuilds to the same transcripts: only funes reads the two
+apart. Each driver's docstring gives its usage, its arms and how it places passages. The releases
 scored, each checked against its published checksum:
 
 | tool | release | sha256 | driver |

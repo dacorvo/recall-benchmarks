@@ -2,9 +2,10 @@
 
 usage: compare.py QUESTIONS REF=HITS NAME=HITS ... [--k 8]
 
-The first NAME=HITS is the reference. Rows are score.py's: hit@1, hit@5, found@K, MRR, and found@K counting
-sessions alone. Then, for each other tool, the questions it ranks the gold higher and lower than the reference
-(a miss ranks below every hit), with a two-sided sign test, and the answers each finds that the other misses.
+The first NAME=HITS is the reference. Rows are score.py's: hit@1, hit@5, found@K, MRR, found@K counting sessions
+alone, and the questions found as a hit, by an answering turn itself rather than in a frame. Then, for each other
+tool, the questions it ranks the gold higher and lower than the reference (a miss ranks below every hit), with a
+two-sided sign test, and the answers each finds that the other misses.
 """
 import argparse
 import json
@@ -13,7 +14,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from score import session_rank, turn_rank  # noqa: E402
+from score import as_hit, load_questions, session_rank, turn_rank  # noqa: E402
 
 
 def sign_p(a, b):
@@ -33,17 +34,20 @@ def main():
     ap.add_argument("arms", nargs="+")
     ap.add_argument("--k", type=int, default=8)
     a = ap.parse_args()
-    qs = [json.loads(l) for l in open(a.questions) if l.strip()]
+    qs = load_questions(a.questions)
     arms = [(s.split("=", 1)[0], load(s.split("=", 1)[1])) for s in a.arms]
     ranks = {}
-    print(f"{'':28} hit@1 hit@5 found@{a.k}   MRR  session@{a.k}")
+    print(f"{'':28} hit@1 hit@5 found@{a.k}   MRR  session@{a.k}  as a hit")
     for name, got in arms:
-        t = [turn_rank(got[q["id"]]["hits"], q["gold"], a.k) for q in qs]
-        s = [session_rank(got[q["id"]]["hits"], q["gold"], a.k) for q in qs]
+        hits = [got[q["id"]]["hits"] for q in qs]
+        t = [turn_rank(h, q["gold"], a.k) for h, q in zip(hits, qs)]
+        s = [session_rank(h, q["gold"], a.k) for h, q in zip(hits, qs)]
+        own = sum(as_hit(h, q["gold"], a.k) for h, q in zip(hits, qs))
         ranks[name] = t
         within = lambda c: sum(1 for r in t if r is not None and r < c)  # noqa: E731
         mrr = sum(1 / (r + 1) for r in t if r is not None) / len(qs)
-        print(f"{name:28} {within(1):5} {within(5):5} {within(a.k + 1):7}  {mrr:.3f}  {sum(r is not None for r in s):9}")
+        sessions = sum(r is not None for r in s)
+        print(f"{name:28} {within(1):5} {within(5):5} {within(a.k + 1):7}  {mrr:.3f}  {sessions:9}  {own:8}")
     ref, rr = arms[0][0], ranks[arms[0][0]]
     big = a.k + 1
     print(f"\nagainst {ref}, question by question (a miss ranks below every hit):")

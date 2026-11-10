@@ -1,4 +1,4 @@
-"""Write LongMemEval's answerable questions with their gold spans in the numbering of its funes memory.
+"""Write LongMemEval's answerable questions with their answering turns in the numbering of its funes memory.
 
 usage: questions.py LONGMEMEVAL_JSON CHUNKS > questions.jsonl
 
@@ -8,17 +8,17 @@ distinct sessions. Each answerable question (the 470 whose id does not end in `_
 line, with LongMemEval's question type as its `kind` and its reference answer:
 
     {"id": "e47becba", "kind": "single-session-user", "question": "…", "answer": "…",
-     "gold": [{"session_id": "answer_280352e9", "from": 4, "to": 5}]}
+     "gold": [{"session_id": "answer_280352e9", "turn": 4}]}
 
-A gold span is an evidence turn (`has_answer`) and the turn after it, in the turns funes numbers: funes skips
-blank turns, so a turn's `seq` is its index among its session's non-blank turns. Some sessions of the pile are
-copies of each other under different ids (the same non-blank turns, role and text). A copy of a gold session
-holds the same turns, so each span is also named in every copy of its session, after the spans of the sessions
+Its gold lists the evidence turns (`has_answer`) as answering turns, in the turns funes numbers: funes skips blank
+turns, so a turn's `seq` is its index among its session's non-blank turns. Some sessions of the pile are copies of
+each other under different ids (the same non-blank turns, role and text). A copy of a gold session holds the same
+turns, so each answering turn is also named in every copy of its session, after the turns of the sessions
 LongMemEval marks, with `copy_of` naming the session it copies:
 
-    {"session_id": "280352e9", "from": 4, "to": 5, "copy_of": "answer_280352e9"}
+    {"session_id": "280352e9", "turn": 4, "copy_of": "answer_280352e9"}
 
-Each turn of a span is checked against the memory, which must hold that turn's text.
+Each answering turn is checked against the memory, which must hold that turn's text.
 """
 import collections
 import json
@@ -66,7 +66,7 @@ def copies(data):
     return {sid: sorted(s for s in by[key] if s != sid) for sid, key in content.items()}
 
 
-def spans(q, mem, copy):
+def answers(q, mem, copy):
     marked = []
     for sid, turns in zip(q["haystack_session_ids"], q["haystack_sessions"]):
         kept = [i for i, t in enumerate(turns) if t["content"].strip()]
@@ -75,19 +75,18 @@ def spans(q, mem, copy):
                 continue
             if sid not in q["answer_session_ids"]:
                 raise SystemExit(f"{q['question_id']}: evidence in {sid}, which is not an answer session")
-            span = range(seq, min(seq + 2, len(kept)))
-            marked.append((sid, span, [turns[kept[s]]["content"] for s in span]))
+            marked.append((sid, seq, turns[i]["content"]))
     if not marked:
         raise SystemExit(f"{q['question_id']}: no evidence turn")
-    out = [({"session_id": sid, "from": span[0], "to": span[-1]}, texts) for sid, span, texts in marked]
-    for sid, span, texts in marked:
+    out = [({"session_id": sid, "turn": seq}, text) for sid, seq, text in marked]
+    for sid, seq, text in marked:
         for c in copy[sid]:
-            if not any(g["session_id"] == c and (g["from"], g["to"]) == (span[0], span[-1]) for g, _ in out):
-                out.append(({"session_id": c, "from": span[0], "to": span[-1], "copy_of": sid}, texts))
-    for g, texts in out:
-        for s, text in zip(range(g["from"], g["to"] + 1), texts):
-            if mem.get((g["session_id"], s), "").strip() != text.strip():
-                raise SystemExit(f"{q['question_id']}: {g['session_id']} turn {s} is not the memory's turn {s}")
+            if not any(g["session_id"] == c and g["turn"] == seq for g, _ in out):
+                out.append(({"session_id": c, "turn": seq, "copy_of": sid}, text))
+    for g, text in out:
+        s = g["turn"]
+        if mem.get((g["session_id"], s), "").strip() != text.strip():
+            raise SystemExit(f"{q['question_id']}: {g['session_id']} turn {s} is not the memory's turn {s}")
     return [g for g, _ in out]
 
 
@@ -99,7 +98,7 @@ def main():
         if q["question_id"].endswith("_abs"):
             continue
         print(json.dumps({"id": q["question_id"], "kind": q["question_type"], "question": q["question"],
-                          "answer": q["answer"], "gold": spans(q, mem, copy)}, ensure_ascii=False))
+                          "answer": q["answer"], "gold": answers(q, mem, copy)}, ensure_ascii=False))
 
 
 if __name__ == "__main__":
