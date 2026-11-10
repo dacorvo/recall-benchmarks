@@ -18,6 +18,11 @@ LongMemEval marks, with `copy_of` naming the session it copies:
 
     {"session_id": "280352e9", "turn": 4, "copy_of": "answer_280352e9"}
 
+A turn elsewhere in the pile with an evidence turn's role and text says the same thing, so it is an answering turn
+too, after the copies, with `repeats` naming the evidence turn:
+
+    {"session_id": "f26d40a1", "turn": 0, "repeats": {"session_id": "answer_5cc9b056", "turn": 0}}
+
 Each answering turn is checked against the memory, which must hold that turn's text.
 """
 import collections
@@ -66,7 +71,22 @@ def copies(data):
     return {sid: sorted(s for s in by[key] if s != sid) for sid, key in content.items()}
 
 
-def answers(q, mem, copy):
+def same_turns(data):
+    """The turns of the pile that hold each role and text, as (session, seq)."""
+    at = collections.defaultdict(list)
+    seen = set()
+    for q in data:
+        for sid, turns in zip(q["haystack_session_ids"], q["haystack_sessions"]):
+            if sid in seen:
+                continue
+            seen.add(sid)
+            kept = [t for t in turns if t["content"].strip()]
+            for seq, t in enumerate(kept):
+                at[(t["role"], t["content"])].append((sid, seq))
+    return at
+
+
+def answers(q, mem, copy, same):
     marked = []
     for sid, turns in zip(q["haystack_session_ids"], q["haystack_sessions"]):
         kept = [i for i, t in enumerate(turns) if t["content"].strip()]
@@ -75,14 +95,18 @@ def answers(q, mem, copy):
                 continue
             if sid not in q["answer_session_ids"]:
                 raise SystemExit(f"{q['question_id']}: evidence in {sid}, which is not an answer session")
-            marked.append((sid, seq, turns[i]["content"]))
+            marked.append((sid, seq, turns[i]["role"], turns[i]["content"]))
     if not marked:
         raise SystemExit(f"{q['question_id']}: no evidence turn")
-    out = [({"session_id": sid, "turn": seq}, text) for sid, seq, text in marked]
-    for sid, seq, text in marked:
+    out = [({"session_id": sid, "turn": seq}, text) for sid, seq, _, text in marked]
+    for sid, seq, _, text in marked:
         for c in copy[sid]:
             if not any(g["session_id"] == c and g["turn"] == seq for g, _ in out):
                 out.append(({"session_id": c, "turn": seq, "copy_of": sid}, text))
+    for sid, seq, role, text in marked:
+        for s, n in sorted(same[(role, text)]):
+            if not any(g["session_id"] == s and g["turn"] == n for g, _ in out):
+                out.append(({"session_id": s, "turn": n, "repeats": {"session_id": sid, "turn": seq}}, text))
     for g, text in out:
         s = g["turn"]
         if mem.get((g["session_id"], s), "").strip() != text.strip():
@@ -93,12 +117,12 @@ def answers(q, mem, copy):
 def main():
     data = json.load(open(sys.argv[1]))
     mem = memory_turns(sys.argv[2])
-    copy = copies(data)
+    copy, same = copies(data), same_turns(data)
     for q in data:
         if q["question_id"].endswith("_abs"):
             continue
         print(json.dumps({"id": q["question_id"], "kind": q["question_type"], "question": q["question"],
-                          "answer": q["answer"], "gold": answers(q, mem, copy)}, ensure_ascii=False))
+                          "answer": q["answer"], "gold": answers(q, mem, copy, same)}, ensure_ascii=False))
 
 
 if __name__ == "__main__":

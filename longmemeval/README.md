@@ -3,7 +3,8 @@
 [LongMemEval](https://github.com/xiaowu0162/LongMemEval) (arXiv:2410.10813) asks 500 questions about
 long chat histories between a user and an assistant, and marks the turns that hold each answer
 (`has_answer`). These are its questions, asked over every distinct session of its LongMemEval-S
-haystacks at once, with each marked turn as an answering turn, in its session and in every copy of it.
+haystacks at once, with each marked turn as an answering turn, along with every turn of the pile that
+holds its role and text.
 
 - source: `longmemeval_s_cleaned.json` of
   [`xiaowu0162/longmemeval-cleaned`](https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned)
@@ -37,6 +38,11 @@ answering turn is also named in every copy of its session, with `copy_of` naming
 LongMemEval marks. This departs from LongMemEval's labels, which name the marked session only. Scored
 on the marked turns alone, every tool loses questions to how it orders two identical passages.
 
+Other sessions repeat a marked turn without copying its whole session: 17 turns hold the role and
+text of a marked turn of 12 questions, each in a session of its own. Most are opening prompts, such as
+the first turn of `answer_5cc9b056`, which also opens `3bc55308` and `f26d40a1`. Each is an answering
+turn too, with `repeats` naming the marked turn.
+
 | kind | questions |
 |---|---|
 | temporal-reasoning | 127 |
@@ -48,12 +54,13 @@ on the marked turns alone, every tool loses questions to how it orders two ident
 
 The 470 questions have 886 marked turns in 837 sessions. 187 questions have their marked turns in one
 session, 228 in two and 55 in three to six. 318 of the marked sessions have copies (367 sessions),
-which add 389 answering turns to 234 questions: 1,275 in all.
+which add 389 answering turns to 234 questions. With the 17 repeated turns, the gold holds 1,292
+answering turns.
 
 `questions.py` writes the file from the source and a local copy of the memory (it needs pylance), and
-checks that the memory holds every answering turn, copies included, with the source's text. They all
-do. (6 turns of the memory differ from the source, all by funes's redaction of a secret, and none is
-an answering turn.)
+checks that the memory holds every answering turn, copies and repeats included, with the source's
+text. They all do. (6 turns of the memory differ from the source, all by funes's redaction of a
+secret, and none is an answering turn.)
 
 ```bash
 hf download xiaowu0162/longmemeval-cleaned longmemeval_s_cleaned.json --repo-type dataset --revision 98d7416c24c778c2fee6e6f3006e7a073259d48f --local-dir src

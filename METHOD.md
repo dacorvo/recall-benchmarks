@@ -11,7 +11,7 @@ How the sets are built, how the tools are run and scored, and how to run one you
 | sharegpt | 100, each in English and in Chinese | 2,000 programming conversations in each language | the reply and its restatements |
 | swe-chat | 100 in Chinese, 36 in Portuguese | 635 and 153 coding-agent sessions | the answering turn and its restatements |
 | thomasmustier-pi-sessions | 100 | 715 sessions of one developer with the pi agent | the answering turn and its restatements |
-| [longmemeval](longmemeval/) | 470, LongMemEval-S's answerable ones | 19,195 chat sessions | each evidence turn, in its session and in every copy of it |
+| [longmemeval](longmemeval/) | 470, LongMemEval-S's answerable ones | 19,195 chat sessions | each evidence turn, and every other turn of the pile with its role and text |
 
 - funes-memory, sharegpt, swe-chat and thomasmustier-pi-sessions are the sets of the
   [funes recall benchmark](https://huggingface.co/datasets/dacorvo/funes-recall-benchmark), each over public
