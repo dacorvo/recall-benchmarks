@@ -3,7 +3,6 @@ and the hits file score.py reads."""
 import datetime
 import json
 import os
-import re
 import subprocess
 import sys
 
@@ -11,16 +10,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from turnmap import TurnMap, norm  # noqa: E402,F401
 
 SYSTEM_PATH = "/usr/local/bin:/usr/bin:/bin"
-# deja-vu's stop words (its scripts/day0compare/cass.py), for the arms that ask a question without them.
-STOP = set("a an the of on in at to for with and or is are was were did do does i my me you your it its what where when "
-           "how which who whom whose that this these those have has had been be am from by as into about over under "
-           "after before than then there here".split())
-
-
-def keywords(q):
-    """The question without stop words, as deja-vu asks the tools whose lexical search needs every word."""
-    toks = [t for t in re.findall(r"[A-Za-z0-9$']+", q.lower()) if t not in STOP]
-    return " ".join(toks) or q
 
 
 def clean_env(home, path=SYSTEM_PATH, **extra):

@@ -1,8 +1,8 @@
 """Map what a tool returns from the rebuilt transcripts back to the memory's turns.
 
 As a module: `TurnMap(CORPUS)` reads `CORPUS/turns.jsonl` (written with the transcripts by the funes recall
-benchmark's `rebuild_sessions.py`) and resolves a record's uuid, timestamp or line, or a passage of its text, to
-the memory's session id and `seq`.
+benchmark's `rebuild_sessions.py`) and resolves a record's uuid, or a passage of its text, to the memory's
+session id and `seq`.
 
 As a script: `turnmap.py gold CORPUS QUESTIONS` prints QUESTIONS with each gold span moved to the rebuilt
 files' numbering (the file's session id, one turn a line), so funes can be scored on its index of them.
@@ -48,7 +48,6 @@ class TurnMap:
         self.corpus = corpus
         self.rows = [json.loads(l) for l in open(os.path.join(corpus, "turns.jsonl"))]
         self.by_uuid = {r["uuid"]: r for r in self.rows}
-        self.by_ts = {(r["file_session_id"], r["timestamp"]): r for r in self.rows}
         self.by_file = collections.defaultdict(list)
         for r in self.rows:
             self.by_file[r["file_session_id"]].append(r)
@@ -59,10 +58,6 @@ class TurnMap:
     def session(self, fid):
         """The memory's session id for a file's session id (they differ only for non-UUID ids)."""
         return self.sid.get(fid)
-
-    def line(self, fid, line):
-        rows = self.by_file.get(fid)
-        return rows[line] if rows and 0 <= line < len(rows) else None
 
     def texts(self, fid):
         """Each record's searchable text, normalized, in line order."""

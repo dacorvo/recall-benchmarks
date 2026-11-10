@@ -31,17 +31,13 @@ How the sets are built, how the tools are run and scored, and how to run one you
 2. **Isolation.** Each tool gets its own HOME, holding a copy of the transcripts, and runs with HOME,
    a system PATH, LANG and TERM and its own data-directory variables, nothing else from the calling
    environment. No agent is wired to a tool and no API key or hosted service is used. That leaves out
-   claude-mem, which needs an LLM to write its memory. ctx's and agentsview's telemetry and update
-   checks, and cass's update prompt, are turned off by their environment variables. A tool may
-   download its own local model. Every daemon a run starts is stopped at its end.
+   claude-mem, which needs an LLM to write its memory. A tool may download its own local model.
+   Every daemon a run starts is stopped at its end.
 3. **Defaults, verbatim.** A tool indexes the history its documented way. Each question is asked
    once, verbatim, at the tool's defaults, through the interface it gives an agent: its MCP tool, or
    the CLI command that returns the same results. A tool that returns fewer than 8 results by default
    is asked for 8.
-4. **Concessions and opt-in modes.** When a tool's lexical search needs every word of the question
-   and answers nothing to most questions as typed, a second arm asks without the stop words of
-   deja-vu's own comparison, named as a concession. An optional local mode (no key) is scored as an
-   arm of its own.
+4. **Opt-in modes.** An optional local mode (no key) is scored as an arm of its own.
 5. **Passages.** A passage is one result, in the tool's order. It is placed at the turn its exact
    metadata names (a uuid, timestamp, line or message number, checked against the files), else by its
    text within its session. A passage that covers several turns is a run of turns. A result that names
@@ -84,10 +80,6 @@ scored, each checked against its published checksum:
 |---|---|---|---|
 | [funes](https://github.com/huggingface/funes) | `main` at `29075cb`, built with `cargo build --release` and `cargo build --release --example score_recall` | | `funes.py FUNES MEMORY QUESTIONS OUT`, MEMORY a local copy of the memory |
 | [deja-vu](https://github.com/vshulcz/deja-vu) | v0.23.5, `deja-vu_0.23.5_linux_amd64.tar.gz` | `b8f8b62c96e56fcb0d7c6110d4cc14cffce4b3075e8881ad4112e1da1e8d3e00` | `deja.py DEJA CORPUS QUESTIONS HOME OUT_DIR` |
-| [cass](https://github.com/Dicklesworthstone/coding_agent_session_search) | v0.10.0, `cass-linux-amd64.tar.gz` | `638ea8a8a9023c2e046bf8868392e6191218b89cf006e81af3ca205b546c4681` | `cass.py CASS CORPUS QUESTIONS HOME OUT_DIR lexical`, then `semantic` |
-| [claude-history](https://github.com/raine/claude-history) | v0.1.81, `claude-history-linux-amd64.tar.gz` | `0f85c5693b5b81c2f383b206e361d90db43171cbf19d08805f83a3752e16012e` | `claude_history.py CLAUDE_HISTORY CORPUS QUESTIONS HOME OUT_DIR lexical`, then `semantic` and `unbudgeted` |
-| [ctx](https://github.com/ctxrs/ctx) | v2.3.0, `ctx-linux-x64` and `ctx-onnxruntime-linux-x64.tar.gz` | `8bc22cb45c7fa9acc2049a3c741925939a3da2801ef7d3b6e9c9c4faeb2fcc8d`, `d59280037cf71b3ad7f6c4c2a28b52ecd09bdc83943f18d5bc8fc39bcdc8a76c` | `ctx.py CTX CORPUS QUESTIONS HOME OUT_DIR`, then `--semantic ORT_TARBALL` |
-| [agentsview](https://github.com/kenn-io/agentsview) | v0.46.1, `agentsview_0.46.1_linux_amd64.tar.gz` | `e7822006d7bafa3aef9a5e4f7d7caffca56051bb039b848222a73633ed4c6c9b` | `agentsview.py AGENTSVIEW CORPUS QUESTIONS HOME OUT_DIR` |
 | [agentmemory](https://github.com/rohitg00/agentmemory) | 0.9.31 from npm (`npm install --ignore-scripts @agentmemory/agentmemory@0.9.31`), and the iii engine v0.25.0 its CLI pins, `iii-x86_64-unknown-linux-gnu.tar.gz` from `iii-hq/iii` | `sha512-+KciN5Ybl6+AhxDLQ1185a/Am0PnzQOvyijmChAuwtsFIhc8WEcsFtZwBemOQfjag5aGYUSofaflnHYPARSnPA==` (npm integrity), `4c4d14063eb55d79663db553e960497731420df6d78eca3aafe670e2fbaba8e2` (iii) | `agentmemory.py AM_DIR ENGINE_DIR CORPUS QUESTIONS HOME OUT_DIR` |
 | [MemPalace](https://github.com/MemPalace/mempalace) | 3.11.0 from PyPI (`uv pip install mempalace==3.11.0`), `mempalace-3.11.0-py3-none-any.whl` | `43e4c690e339b66e86a3177fe4eea15da3d9541ecbd58e671431c1e13dc1bf0c` | `mempalace.py VENV_BIN CORPUS QUESTIONS HOME OUT_DIR mcp mcp-sweep` |
 

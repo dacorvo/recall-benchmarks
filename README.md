@@ -18,19 +18,19 @@ Questions answered within a tool's first 8 results:
 | agentmemory 0.9.31 | 66 | 225 |
 | deja-vu 0.23.5, `search` | 58 | 219 |
 | deja-vu 0.23.5, `recall` | 43 | 184 |
-| ctx 2.3.0 | 29 | 67 |
-| cass 0.10.0 | 1 | 14 |
-| claude-history 0.1.81 | 1 | 7 |
-| agentsview 0.46.1 | 0 | 0 |
 
-funes leads on both sets. It does not lead in two places:
-
-- On funes-memory, claude-history's optional semantic search is level with funes.
-- Counting the right session rather than the right turn, funes ties with that search on
-  funes-memory, and with deja-vu's `search` on longmemeval.
+funes leads on both sets. Counting the right session rather than the right turn, it ties with
+deja-vu's `search` on longmemeval.
 
 The receipts give every score, including each tool's optional modes:
 [funes-memory](results/funes-memory/2026-11-03.md), [longmemeval](results/longmemeval/2026-11-04.md).
+
+The same runs also scored ctx, cass, claude-history and agentsview, which are no longer compared
+here. At their defaults none found more than 29 funes-memory answers or 67 longmemeval ones.
+claude-history's optional semantic search was level with funes on funes-memory, but its cache cannot
+hold longmemeval's sessions. Their scores are in the receipts at `3aebb37`:
+[funes-memory](https://github.com/dacorvo/recall-benchmarks/blob/3aebb37dffb4748ea92f9d9273dd2129cc021440/results/funes-memory/2026-11-03.md),
+[longmemeval](https://github.com/dacorvo/recall-benchmarks/blob/3aebb37dffb4748ea92f9d9273dd2129cc021440/results/longmemeval/2026-11-04.md).
 
 ## The two sets
 
