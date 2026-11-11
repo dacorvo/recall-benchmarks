@@ -8,7 +8,7 @@ How the sets are built, how the tools are run and scored, and how to run one you
 | set | questions | sessions | answering turns |
 |---|---|---|---|
 | funes-memory | 240 about funes's development | 139 coding-agent sessions | the answer and its reviewed restatements |
-| sharegpt | 100, each in English and in Chinese | 2,000 programming conversations in each language | the reply and its restatements |
+| sharegpt | 100, each in English and in Chinese | 2,000 programming conversations, in English and in their Chinese machine translation | the reply and its restatements |
 | swe-chat | 100 in Chinese, 36 in Portuguese | 635 and 153 coding-agent sessions | the answering turn and its restatements |
 | thomasmustier-pi-sessions | 100 | 715 sessions of one developer with the pi agent | the answering turn and its restatements |
 | [longmemeval](longmemeval/) | 470, LongMemEval-S's answerable ones | 19,195 chat sessions | each evidence turn, and every other turn of the pile with its role and text |
@@ -29,8 +29,7 @@ How the sets are built, how the tools are run and scored, and how to run one you
    set's funes memory by the funes recall benchmark's
    [`rebuild_sessions.py`](https://huggingface.co/datasets/dacorvo/funes-recall-benchmark/blob/main/funes-memory/tools/rebuild_sessions.py):
    one record per turn, with `turns.jsonl` mapping each record back to its turn. funes reads the
-   published memory itself. On funes-memory, funes finds the same 128 answers when it indexes the
-   rebuilt files instead (the control in the [receipt](results/funes-memory/2026-11-03.md)).
+   published memory itself.
 2. **Isolation.** Each tool gets its own HOME, holding a copy of the transcripts, and runs with HOME,
    a system PATH, LANG and TERM and its own data-directory variables, nothing else from the calling
    environment. No agent is wired to a tool and no API key or hosted service is used. That leaves out
@@ -58,7 +57,8 @@ How the sets are built, how the tools are run and scored, and how to run one you
    the first 50 results.
 
 The receipts report precision only: no latency, build time or output size. Several tools ran at once
-on one machine.
+on one machine. funes's rows on the funes recall benchmark's sets come from that benchmark's own
+receipts, made on another machine at the same funes commit (each receipt says which).
 
 ## Running a tool
 
@@ -79,28 +79,28 @@ python3 tools/score.py bench/funes-memory/questions.jsonl runs/deja/search.jsonl
 | funes-memory | `huggingface/funes-memory` at `347686a1c7ed495fb653d650d78f9b92f8744c7a` | `62ef948a1587f59a8506a6bfb4c4255fc8074a1d927c6fb299572aeaf42540ff` | `bench/funes-memory/questions.jsonl` |
 | sharegpt-en | `huggingface/funes-sharegpt-en` at `c9aa03279a825cdd5218421a303fd6ca541b40bb` | `0d73c2e45bdbd66308baa4e84484f025a5097dd924eb401982b51f0305ce3d53` | `bench/sharegpt/questions-en.jsonl` |
 | sharegpt-zh | `huggingface/funes-sharegpt-zh` at `39b42e1e789c107b2b913e5abd897ed89064f81e` | `3e02149ff1c6c03caa82ac9b4306b39b8b012d76bdf44122e60f02c6a27f644f` | `bench/sharegpt/questions-zh.jsonl` |
-| sharegpt-zh-e5 | `huggingface/funes-sharegpt-zh-e5` at `c510570f61d5395e535a976773c261d3250fed5f` | `3e02149ff1c6c03caa82ac9b4306b39b8b012d76bdf44122e60f02c6a27f644f` | `bench/sharegpt/questions-zh.jsonl` |
-| swe-chat-zh-e5 | `huggingface/funes-swe-chat-zh-e5` at `31749928929be585964d248a132ddd116bb3b885` | `c97af069ca3d3e76a67c23b16e6aad7ea4195fe730a29d1e489f0eb5c54b5c98` | `bench/swe-chat/questions.jsonl` |
-| swe-chat-pt | `huggingface/funes-swe-chat-pt` at `22ff20415fcb7c9cb881afc486fff8032c3f9c6b` | `ebcad94a8fdecce615969e525b2c9b6fbe45fc696f19153854a00d63778801da` | `bench/swe-chat/questions-pt.jsonl` |
-| swe-chat-pt-e5 | `huggingface/funes-swe-chat-pt-e5` at `457d2154e6ac2843faa393c05400073bc4e5e8db` | `ebcad94a8fdecce615969e525b2c9b6fbe45fc696f19153854a00d63778801da` | `bench/swe-chat/questions-pt.jsonl` |
-| thomasmustier-pi-sessions | `huggingface/funes-thomasmustier-pi-sessions` at `42244122ebbf42166ffb73897dd6eaaa2f977dc8` | `45d6322c639f493fd37d31f1f1375b7036e665aef0edd56f13fa05d4007f1017` | `bench/thomasmustier-pi-sessions/questions.jsonl` |
+| swe-chat-zh | `huggingface/funes-swe-chat-zh-e5` at `31749928929be585964d248a132ddd116bb3b885` | `c97af069ca3d3e76a67c23b16e6aad7ea4195fe730a29d1e489f0eb5c54b5c98` | `bench/swe-chat/questions.jsonl` |
+| swe-chat-pt | `huggingface/funes-swe-chat-pt-e5` at `457d2154e6ac2843faa393c05400073bc4e5e8db` | `ebcad94a8fdecce615969e525b2c9b6fbe45fc696f19153854a00d63778801da` | `bench/swe-chat/questions-pt.jsonl` |
+| thomasmustier-pi-sessions | `huggingface/funes-thomasmustier-pi-sessions` at `42244122ebbf42166ffb73897dd6eaaa2f977dc8` | `87d664be889dc15a188cfaa9e814034bbc29e27bbf1402752cf6c6f64566571d` | `bench/thomasmustier-pi-sessions/questions.jsonl` |
 | longmemeval | `dacorvo/funes-xiaowu0162-longmemeval-cleaned-s` at `58450d98655f3d104359fb119933d7a4d6597d13` | `3298cc7cdccadb42255aa628d49a963ae7367619642b1f216abd82d3287db7e0` | [`longmemeval/questions.jsonl`](longmemeval/questions.jsonl) |
 
 The digest is what `(cd corpus && find home turns.jsonl -type f | LC_ALL=C sort | xargs sha256sum | sha256sum)`
-prints. The memories are at the revisions the benchmark's results pin. An `-e5` memory holds the same sessions
-as its twin, embedded with multilingual-e5, and rebuilds to the same transcripts: only funes reads the two
-apart. Each driver's docstring gives its usage, its arms and how it places passages. The releases
+prints on a case-sensitive filesystem: four project folders of thomasmustier-pi-sessions differ only in case,
+and a case-insensitive one merges them. The memories are at the revisions the benchmark's results pin. Each
+driver's docstring gives its usage, its arms and how it places passages. The releases
 scored, each checked against its published checksum:
 
 | tool | release | sha256 | driver |
 |---|---|---|---|
-| [funes](https://github.com/huggingface/funes) | `main` at `29075cb`, built with `cargo build --release` and `cargo build --release --example score_recall` | | `funes.py FUNES MEMORY QUESTIONS OUT`, MEMORY a local copy of the memory |
-| [deja-vu](https://github.com/vshulcz/deja-vu) | v0.23.5, `deja-vu_0.23.5_linux_amd64.tar.gz` | `b8f8b62c96e56fcb0d7c6110d4cc14cffce4b3075e8881ad4112e1da1e8d3e00` | `deja.py DEJA CORPUS QUESTIONS HOME OUT_DIR` |
-| [agentmemory](https://github.com/rohitg00/agentmemory) | 0.9.31 from npm (`npm install --ignore-scripts @agentmemory/agentmemory@0.9.31`), and the iii engine v0.25.0 its CLI pins, `iii-x86_64-unknown-linux-gnu.tar.gz` from `iii-hq/iii` | `sha512-+KciN5Ybl6+AhxDLQ1185a/Am0PnzQOvyijmChAuwtsFIhc8WEcsFtZwBemOQfjag5aGYUSofaflnHYPARSnPA==` (npm integrity), `4c4d14063eb55d79663db553e960497731420df6d78eca3aafe670e2fbaba8e2` (iii) | `agentmemory.py AM_DIR ENGINE_DIR CORPUS QUESTIONS HOME OUT_DIR` |
+| [funes](https://github.com/huggingface/funes) | `main` at `7250df3`, built with `cargo build --release` | | `funes.py FUNES MEMORY QUESTIONS OUT`, MEMORY a local copy of the memory |
+| [deja-vu](https://github.com/vshulcz/deja-vu) | v0.24.1, `deja-vu_0.24.1_linux_amd64.tar.gz` | `c2489d191edfb085a267c819b1ade32c795a6849e2b90097fb699c6f77989168` | `deja.py DEJA CORPUS QUESTIONS HOME OUT_DIR` |
+| [agentmemory](https://github.com/rohitg00/agentmemory) | 0.9.33 from npm (`npm install --ignore-scripts @agentmemory/agentmemory@0.9.33`), and the iii engine v0.25.1 its CLI pins, `iii-x86_64-unknown-linux-gnu.tar.gz` from `iii-hq/iii` | `sha512-YUW8nLg9nx+v70B8fyltvmlJrU1POKz7X7/90EpqJ367nksbOzek0FuuwI5tbcncebdmL1A/dqO92ix5mPncRw==` (npm integrity), `0f486f0fb175013fdebd482735228a47de5fd5014d375a9720cb4f958341208a` (iii) | `agentmemory.py AM_DIR ENGINE_DIR CORPUS QUESTIONS HOME OUT_DIR` |
 | [MemPalace](https://github.com/MemPalace/mempalace) | 3.11.0 from PyPI (`uv pip install mempalace==3.11.0`), `mempalace-3.11.0-py3-none-any.whl` | `43e4c690e339b66e86a3177fe4eea15da3d9541ecbd58e671431c1e13dc1bf0c` | `mempalace.py VENV_BIN CORPUS QUESTIONS HOME OUT_DIR mcp mcp-sweep` |
 
 funes is also scored with its own `score_recall` on the published memory:
-`score_recall QUESTIONS --memory <memory>`, from a funes checkout. `tools/compare.py QUESTIONS
+`score_recall QUESTIONS --memory <memory>`, from a funes checkout. Its receipt lists the turns each
+reply showed, a hit's own turn and its frame's, and those are funes's hits on the funes recall
+benchmark's sets: `tools/score.py` gives the receipt's totals from them. `tools/compare.py QUESTIONS
 funes=HITS tool=HITS ...` puts the arms side by side and runs a paired sign test of each against the
 first. `tools/clean.sh HOME CMD ...` runs a command in the same clean environment as the drivers.
 
@@ -115,4 +115,5 @@ first. `tools/clean.sh HOME CMD ...` runs a command in the same clean environmen
 
 The tools' raw answers are in the bucket
 [`dacorvo/recall-benchmark`](https://huggingface.co/buckets/dacorvo/recall-benchmark), under
-`<set>/<tool>/raw/`, each run's `run.json` beside them.
+`<set>/<tool>/<date>/` with each run's `run.json`.
+Each run's scripts, logs and releases are under `runs/<date>/`.
